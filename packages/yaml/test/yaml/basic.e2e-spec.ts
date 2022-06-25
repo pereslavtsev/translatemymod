@@ -1,8 +1,6 @@
 import { text, Yaml } from '../../src';
 import { readExampleFile } from './helpers';
 import { VersionMap } from '../../src/yaml/classes/version-map.class';
-import fs from 'fs';
-import { before } from 'cheerio/lib/api/manipulation';
 
 const EXAMPLE_LANGUAGE = 'english';
 const EXAMPLE_KEY = 'infantry_equipment';

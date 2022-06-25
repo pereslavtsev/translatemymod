@@ -4,6 +4,9 @@
   "description": "",
   "author": "",
   "license": "MIT",
+  "bin": {
+    "cli": "dist/main"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -20,9 +23,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@google-cloud/translate": "^6.3.1",
     "@nestjs/common": "^8.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
+    "fast-glob": "^3.2.11",
+    "googleapis": "^104.0.0",
+    "hoi4-yaml": "^0.1.0",
     "nest-commander": "^2.5.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

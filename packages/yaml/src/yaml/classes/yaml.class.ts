@@ -2,30 +2,52 @@ import { text } from '../../text';
 import { TranslationMap } from './translation-map.class';
 import type { LanguageKey, Translation } from '../types';
 import { translationRegexp, languageRegexp } from '../regexp';
+import { addBOM, removeBOM } from '../helpers';
+import { nanoid } from 'nanoid';
 
 export class Yaml extends TranslationMap {
+  protected readonly id = nanoid();
+  protected readonly debug = this.debug.extend(this.id);
+
   protected constructor(protected data: string) {
     super();
+    this.debug('yaml file has been initialized');
     this.add(...this.matchTranslations());
+    this.debug(
+      '%d keys has been matched at %d languages:',
+      this.size,
+      this.languages.length,
+      ...this.languages,
+    );
   }
 
   protected handleChange(event) {
     super.handleChange(event);
 
-    const { key, version, language } = event;
-    [...this.data.matchAll(languageRegexp(language))].map(([data]) => {
-      console.log(222, translationRegexp(key, version));
-      const xxxx = this.data.match(translationRegexp(key, version));
-      console.log('xxxx', xxxx);
-      data.replace(translationRegexp(key, version), (d) => {
-        console.log(d);
-        return '';
+    const { key, version, language, after } = event;
+    const updatedData = this.data.replace(languageRegexp(language), (data) => {
+      const regexp = translationRegexp(key, version);
+      this.debug('matching translations... %o', { language, regexp });
+      return data.replace(regexp, (line, ...args) => {
+        const groups = args.find((arg) => typeof arg === 'object');
+        const searchValue = `"${groups['value']}"`;
+        const replaceValue = `"${after.raw}"`;
+        this.debug('trying to replace: %s -> %s', searchValue, replaceValue);
+        return line.replace(searchValue, replaceValue);
       });
     });
+    if (this.data === updatedData) {
+      this.debug('warning: no data updates after change event!');
+      return;
+    }
+    this.data = updatedData;
+    this.debug('data has been updated');
   }
 
   static from(data: Buffer | string) {
-    return new Yaml(Buffer.isBuffer(data) ? data.toString() : data);
+    return new Yaml(
+      Buffer.isBuffer(data) ? removeBOM(data.toString()) : removeBOM(data),
+    );
   }
 
   protected matchTranslations(language?: LanguageKey): Translation[] {
@@ -34,16 +56,14 @@ export class Yaml extends TranslationMap {
     }
 
     return [...this.data.matchAll(languageRegexp(language))].flatMap(
-      ([, data]) =>
-        [...data.matchAll(translationRegexp())].map(({ groups }) => {
-          const [key, version] = groups['key'].split(':');
-          return {
-            language,
-            key,
-            version: version ? Number(version) : undefined,
-            value: text(groups['value']),
-          };
-        }),
+      ([, data]) => {
+        return [...data.matchAll(translationRegexp())].map(({ groups }) => ({
+          language,
+          key: groups['key'],
+          version: groups['version'] ? Number(groups['version']) : undefined,
+          value: text(groups['value']),
+        }));
+      },
     );
   }
 
@@ -52,5 +72,9 @@ export class Yaml extends TranslationMap {
       ({ groups }) => groups['lang'],
     );
     return [...new Set(languages)];
+  }
+
+  toString() {
+    return addBOM(this.data);
   }
 }

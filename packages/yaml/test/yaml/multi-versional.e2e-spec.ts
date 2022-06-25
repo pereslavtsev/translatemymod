@@ -80,4 +80,23 @@ describe('Multi-versional (e2e)', () => {
       });
     });
   });
+
+  describe('Editing', () => {
+    let edited: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('multi-versional-edited.yml');
+      edited = Yaml.from(file);
+    });
+
+    it('data after editing should be matched with expected', () => {
+      yaml.set({
+        key: EXAMPLE_KEY,
+        language: EXAMPLE_LANGUAGE,
+        version: 1,
+        value: 'Infantry Equipment 2 (edited)',
+      });
+      expect(yaml.toString()).toBe(edited.toString());
+    });
+  });
 });

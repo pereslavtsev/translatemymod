@@ -39,4 +39,22 @@ describe('Multilingual (e2e)', () => {
       expect(yaml.language('french').size).toBe(5);
     });
   });
+
+  describe('Editing', () => {
+    let edited: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('multilingual-edited.yml');
+      edited = Yaml.from(file);
+    });
+
+    it('data after editing should be matched with expected', () => {
+      yaml.set({
+        key: 'some_key_4',
+        language: 'french',
+        value: 'Infantry Equipment (edited)',
+      });
+      expect(yaml.toString()).toBe(edited.toString());
+    });
+  });
 });

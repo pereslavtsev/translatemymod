@@ -24,8 +24,13 @@ export class TranslationMap extends CaseInsensitiveMap<
 
   readonly t = this.translate;
 
+  protected handleAdd(translation: Translation) {
+    this.debug('translation has been added: %o', translation);
+  }
+
   protected handleChange(event: TranslationChangeEvent) {
-    console.log(event);
+    const { context: _, ...payload } = event;
+    this.debug('on change trigger has been called: %O', payload);
   }
 
   set(translation: TranslationKey | Translation, value?: LanguageMap) {
@@ -84,6 +89,8 @@ export class TranslationMap extends CaseInsensitiveMap<
       } else if (!this.get(key).get(language).has(version)) {
         this.get(key).get(language).set(version, formattedText);
       }
+
+      this.handleAdd(item);
     });
     return this;
   }

@@ -1,6 +1,8 @@
 import { text, Yaml } from '../../src';
 import { readExampleFile } from './helpers';
 import { VersionMap } from '../../src/yaml/classes/version-map.class';
+import fs from 'fs';
+import { before } from 'cheerio/lib/api/manipulation';
 
 const EXAMPLE_LANGUAGE = 'english';
 const EXAMPLE_KEY = 'infantry_equipment';
@@ -69,12 +71,20 @@ describe('Basic (e2e)', () => {
   });
 
   describe('Editing', () => {
-    it('', () => {
-      const translation = yaml.set({
+    let edited: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('basic-edited.yml');
+      edited = Yaml.from(file);
+    });
+
+    it('data after editing should be matched with expected', () => {
+      yaml.set({
         key: EXAMPLE_KEY,
         language: EXAMPLE_LANGUAGE,
-        value: '4324234',
+        value: 'Infantry Equipment (edited)',
       });
+      expect(yaml.toString()).toBe(edited.toString());
     });
   });
 });

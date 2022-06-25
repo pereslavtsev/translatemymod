@@ -20,7 +20,8 @@ export class FormattedText {
   }
 
   html() {
-    return this.raw.replace(COLOURING_REGEXP, colouringReplacer)
+    return this.raw
+      .replace(COLOURING_REGEXP, colouringReplacer)
       .replace(NAMESPACE_REGEXP, namespaceReplacer)
       .replace(TEXT_ICON_REGEXP, textIconReplacer);
   }

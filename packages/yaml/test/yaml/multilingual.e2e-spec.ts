@@ -1,6 +1,6 @@
 import { Yaml } from '../../src';
 import { readExampleFile } from './helpers';
-import { LanguageKey } from '../../src/yaml/types';
+import { LanguageKey, Translation } from '../../src/yaml/types';
 
 const RECEIVED_LANGUAGES = ['english', 'french', 'russian'];
 
@@ -37,6 +37,36 @@ describe('Multilingual (e2e)', () => {
   describe('Keys', () => {
     it('french dictionary should have a 5 keys', () => {
       expect(yaml.language('french').size).toBe(5);
+    });
+  });
+
+  describe('Translations', () => {
+    let translations: Translation[];
+    let filteredTranslations: Translation[];
+
+    beforeAll(() => {
+      translations = yaml.translations();
+      filteredTranslations = yaml.translations({ language: 'french' });
+    });
+
+    it('count should be equal 11', () => {
+      expect(translations.length).toBe(11);
+    });
+
+    it('count for french should be equal 5', () => {
+      expect(filteredTranslations.length).toBe(5);
+    });
+
+    it('every filtered translation should be french', () => {
+      expect(
+        filteredTranslations.every(({ language }) => language === 'french'),
+      ).toBe(true);
+    });
+
+    it('should be array of objects', () => {
+      expect(
+        translations.every((translation) => typeof translation === 'object'),
+      ).toBe(true);
     });
   });
 

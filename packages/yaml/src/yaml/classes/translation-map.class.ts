@@ -13,6 +13,8 @@ type TranslationChangeEvent = Omit<Translation, 'value'> & {
   readonly context: TranslationMap;
 };
 
+type GetTranslationsOptions = Partial<Pick<Translation, 'language'>>;
+
 export class TranslationMap extends CaseInsensitiveMap<
   TranslationKey,
   LanguageMap
@@ -72,6 +74,23 @@ export class TranslationMap extends CaseInsensitiveMap<
         value.language(language),
       ]);
     return new TranslationMap(entries);
+  }
+
+  translations(options: GetTranslationsOptions = {}): Translation[] {
+    const { language } = options;
+    return [...this.entries()]
+      .map(([key, langMap]) =>
+        [...(language ? langMap.language(language) : langMap).entries()].map(
+          ([language, versionMap]) =>
+            [...(versionMap?.entries() ?? [])].map(([version, value]) => ({
+              key,
+              language,
+              value,
+              version,
+            })),
+        ),
+      )
+      .flat(3);
   }
 
   add(...items: Translation[]) {

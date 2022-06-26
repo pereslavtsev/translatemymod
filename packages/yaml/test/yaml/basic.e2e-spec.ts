@@ -1,6 +1,8 @@
 import { text, Yaml } from '../../src';
 import { readExampleFile } from './helpers';
 import { VersionMap } from '../../src/yaml/classes/version-map.class';
+import { Translation } from '../../src/yaml/types';
+import { before } from 'cheerio/lib/api/manipulation';
 
 const EXAMPLE_LANGUAGE = 'english';
 const EXAMPLE_KEY = 'infantry_equipment';
@@ -59,6 +61,22 @@ describe('Basic (e2e)', () => {
   });
 
   describe('Translations', () => {
+    let translations: Translation[];
+
+    beforeAll(() => {
+      translations = yaml.translations();
+    });
+
+    it('count should be equal 3', () => {
+      expect(translations.length).toBe(3);
+    });
+
+    it('should be array of objects', () => {
+      expect(
+        translations.every((translation) => typeof translation === 'object'),
+      ).toBe(true);
+    });
+
     it('value should be matched with expected', () => {
       const translation = yaml.t({
         key: EXAMPLE_KEY,

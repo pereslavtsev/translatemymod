@@ -1,6 +1,10 @@
 l_english:
 
-
+#####
+# This is the overwrite file for vanilla localisation, anything here will replace the vanilla localisation of the same string
+# It is broken up into two parts
+# Part one is significantly changed from vanilla (like has a totally new meaning) and thus should be translated
+# Part two just has spelling and grammar fixes and so doesn't need to be translated
 
   infantry_equipment: "Infantry Equipment"
   infantry_equipment_short: "Inf. Eq."

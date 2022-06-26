@@ -70,6 +70,7 @@ export class Yaml extends TranslationMap {
     const languages = [...this.data.matchAll(languageRegexp())].map(
       ({ groups }) => groups['lang'],
     );
+    this.debug('matched languages', languages);
     return [...new Set(languages)];
   }
 

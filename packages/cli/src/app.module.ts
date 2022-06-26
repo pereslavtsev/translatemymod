@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TranslateCommand } from './translate.command';
+import { TranslateModule } from './translate/translate.module';
 
 @Module({
-  imports: [],
-  providers: [TranslateCommand],
+  imports: [TranslateModule],
+  providers: [],
 })
 export class AppModule {}

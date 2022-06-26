@@ -1,6 +1,11 @@
 import { text } from '../../src';
 
 describe('Converting to HTML (e2e)', () => {
+  it('should return empty string', () => {
+    const example = text('');
+    expect(example.html()).toBe('');
+  });
+
   describe('Functions', () => {
     it('should be matched with expected', () => {
       const example = text(`Work with [From.GetAdjective] Allies`);

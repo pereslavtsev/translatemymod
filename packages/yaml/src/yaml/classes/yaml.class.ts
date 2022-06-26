@@ -61,7 +61,7 @@ export class Yaml extends TranslationMap {
           language,
           key: groups['key'],
           version: groups['version'] ? Number(groups['version']) : undefined,
-          value: text(groups['value']),
+          value: text(groups['value'] ?? ''),
         })),
     );
   }

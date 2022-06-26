@@ -1,6 +1,11 @@
 import { fromHtml } from '../../src';
 
 describe('Converting from HTML (e2e)', () => {
+  it('should return empty string', () => {
+    const example = fromHtml('');
+    expect(example.raw).toBe('');
+  });
+
   describe('Functions', () => {
     it('should be matched with expected', () => {
       const example = fromHtml(

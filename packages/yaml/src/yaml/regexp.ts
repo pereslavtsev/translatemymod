@@ -2,7 +2,7 @@ import { LanguageKey, TranslationKey, VersionKey } from './types';
 
 const FLAGS = 'gmi';
 
-const LANGUAGE_REGEXP = new RegExp(/^\s*?l_(?<lang>\S+):\n/, FLAGS);
+const LANGUAGE_REGEXP = new RegExp(/^\s*?l_(?<lang>\S+):\r?\n/, FLAGS);
 const TRANSLATION_REGEXP = new RegExp(
   /\s*?(?<key>\S+):(?<version>\d+)?\s+"(?<value>.+)"\s*?\n?/,
   FLAGS,
@@ -12,7 +12,10 @@ export function languageRegexp(language?: LanguageKey): RegExp {
   if (!language) {
     return LANGUAGE_REGEXP;
   }
-  return new RegExp(`^l_${language}:\n((.+\n?)+)`, FLAGS);
+  return new RegExp(
+    `^l_${language}:\r?\n((\\s?\\r?\\n|\\s*?(\\S+):(\\d+)?\\s+"(.+)"\\s*?\\r?\\n?)+)`,
+    FLAGS,
+  );
 }
 
 export function translationRegexp(

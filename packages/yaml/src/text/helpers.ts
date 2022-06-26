@@ -14,8 +14,8 @@ export function textIconReplacer(_: string, ...args: string[]) {
 
 export function colouringReplacer(_: string, ...args: [Color, ...string[]]) {
   const [color, children] = args;
-  const content = `<font color="${HtmlColor[color]}">${children}</font>`;
-  const $ = load(content, { xmlMode: true });
+  const content = `<font color="${HtmlColor[color]}" data-color="${color}">${children}</font>`;
+  const $ = load(content, { xmlMode: true, decodeEntities: false });
   switch (color) {
     case Color.Title:
     case Color.Header: {
@@ -27,4 +27,9 @@ export function colouringReplacer(_: string, ...args: [Color, ...string[]]) {
   }
 
   return $.html();
+}
+
+export function variableReplacer(_: string, ...args: string[]) {
+  const [data] = args;
+  return `<span data-variable="${data}" />`;
 }

@@ -18,18 +18,26 @@ interface TranslateCommandOptions {
   number?: number;
 }
 
-type Ctx = Record<
-  string,
-  {
-    translated: number;
-    skipped: number;
-    buffer?: Buffer;
-    yaml?: Yaml;
-  }
->;
+type Ctx = {
+  translated: number;
+  skipped: number;
+  buffer?: Buffer;
+  yaml?: Yaml;
+};
+
+type Ctx1 = {
+  processed: number;
+  total: number;
+};
 
 const KR_PATH =
   '/Volumes/Windows/Users/pstra/Documents/Paradox Interactive/Hearts of Iron IV/mod/1521695605_kaiserreich';
+
+function* chunks(arr, n) {
+  for (let i = 0; i < arr.length; i += n) {
+    yield arr.slice(i, i + n);
+  }
+}
 
 @Command({
   name: 'translate',
@@ -49,59 +57,56 @@ export class TranslateCommand implements CommandRunner {
     //const modPath2 = '../../examples';
     const modPath2 = '../../examples2';
 
-    const tasks = new Listr<Ctx>([], {
-      concurrent: 5,
+    const entries = await fg(['**/*.yml'], {
+      cwd: modPath2,
+    });
+
+    const tasks = new Listr<Ctx1>([], {
+      ctx: {
+        processed: 0,
+        total: entries.length,
+      },
       rendererOptions: {
         showSubtasks: false,
       },
     });
 
-    const stream = fg.stream(['**/*.yml'], {
-      cwd: modPath2,
-    });
-
-    for await (const entry of stream) {
-      tasks.add({
-        title: `${entry}`,
-        task: (ctx, task) =>
-          task.newListr((parent) => [
-            {
-              task: async () => {
-                parent.title = `${entry} (reading...)`;
-                ctx[entry.toString()] = { translated: 0, skipped: 0 };
-                const filePath = path.join(modPath2, entry.toString());
-                ctx[entry.toString()].buffer = await fs.promises.readFile(
-                  filePath,
-                );
-              },
-            },
-            {
-              task: (ctx, task) => {
-                parent.title = `${entry} (parsing YAML...)`;
-                ctx[entry.toString()].yaml = Yaml.from(
-                  ctx[entry.toString()].buffer,
-                );
-                task.title = `A YAML has been successfully parsed (${
-                  ctx[entry.toString()].yaml.size
-                } translations)`;
-              },
-            },
-            {
-              title: 'Translation to <RUS>...',
-              task: (ctx, task) =>
-                task.newListr(
-                  [...ctx[entry.toString()].yaml.entries()].map(
-                    ([key, languageMap]) => ({
-                      title: key,
-                      task: (ctx, task) =>
-                        task.newListr(
-                          [
-                            ...(languageMap.get('english')?.entries() ?? []),
-                          ].map(([version, value]) => ({
+    tasks.add({
+      title: 'Translating...',
+      task: async (ctx1, task) =>
+        task.newListr((parent) =>
+          entries.map((entry) => ({
+            title: `${entry}`,
+            task: (_, task) =>
+              task.newListr<Ctx>(
+                () => [
+                  {
+                    task: async (ctx) => {
+                      parent.title = `Translating ${entry} (${ctx1.processed}/${ctx1.total})...`;
+                      parent.output = `Reading a file ${entry}...`;
+                      const filePath = path.join(modPath2, entry.toString());
+                      ctx.buffer = await fs.promises.readFile(filePath);
+                    },
+                  },
+                  {
+                    task: async (ctx) => {
+                      parent.output = `Parsing YAML from ${entry}...`;
+                      ctx.yaml = Yaml.from(ctx.buffer);
+                    },
+                  },
+                  {
+                    task: (ctx, task) =>
+                      task.newListr(
+                        ctx.yaml
+                          .translations({ language: 'english' })
+                          .map(({ key, value, version }) => ({
                             task: async () => {
-                              const markup = value.html();
+                              const markup =
+                                typeof value === 'string'
+                                  ? value
+                                  : value.html();
                               if (markup === '') {
-                                ctx[entry.toString()].skipped++;
+                                ctx.skipped++;
                                 task.skip('Skipped an empty string');
                                 return;
                               }
@@ -113,49 +118,54 @@ export class TranslateCommand implements CommandRunner {
                                   sourceLanguageCode: 'en',
                                   targetLanguageCode: 'ru',
                                 });
-                              const yaml = ctx[entry.toString()].yaml;
-                              yaml.set({
+                              ctx.yaml.set({
                                 language: 'english',
                                 version,
                                 key,
                                 value: fromHtml(translations[0].translatedText),
                               });
-                              const translated = ctx[entry.toString()]
-                                .translated++;
-                              const checked =
-                                translated + ctx[entry.toString()].skipped;
+                              const translated = ctx.translated++;
+                              const checked = translated + ctx.skipped;
                               const percentage = Math.round(
-                                (checked / yaml.size) * 100,
+                                (checked / ctx.yaml.size) * 100,
                               );
-                              parent.title = `${entry} (translating: ${percentage}%)`;
+                              parent.output = `Translating ${entry}: ${percentage}% (${checked}/${ctx.yaml.size})`;
                             },
                           })),
-                        ),
-                    }),
-                  ),
-                ),
-            },
-            {
-              task: async (ctx, task) => {
-                parent.title = `${entry} (writing a file...)`;
-                const filePath = path.join('../../generated', entry.toString());
-                const dirName = path.dirname(filePath);
-                if (!fs.existsSync(dirName)) {
-                  await fs.promises.mkdir(dirName, { recursive: true });
-                }
-                await fs.promises.writeFile(
-                  filePath,
-                  ctx[entry.toString()].yaml.toString(),
-                );
-                task.title = 'File has been successfully written';
-                parent.title = `${entry} (translated: ${
-                  ctx[entry.toString()].translated
-                }, skipped: ${ctx[entry.toString()].skipped})`;
-              },
-            },
-          ]),
-      });
-    }
+                      ),
+                  },
+                  {
+                    task: async (ctx, task) => {
+                      parent.output = `Writing a file ${entry}...`;
+                      const filePath = path.join(
+                        '../../generated',
+                        entry.toString(),
+                      );
+                      const dirName = path.dirname(filePath);
+                      if (!fs.existsSync(dirName)) {
+                        await fs.promises.mkdir(dirName, { recursive: true });
+                      }
+                      await fs.promises.writeFile(
+                        filePath,
+                        ctx.yaml.toString(),
+                      );
+                      ctx1.processed++;
+                      parent.output = `${entry} (translated: ${ctx.translated}, skipped: ${ctx.skipped})`;
+                    },
+                  },
+                ],
+                {
+                  ctx: {
+                    translated: 0,
+                    skipped: 0,
+                    buffer: null,
+                    yaml: null,
+                  },
+                },
+              ),
+          })),
+        ),
+    });
 
     try {
       await tasks.run();

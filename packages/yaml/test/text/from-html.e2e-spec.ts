@@ -1,4 +1,11 @@
 import { fromHtml } from '../../src';
+import {
+  HTML_EXAMPLE,
+  FUNCTIONS_EXAMPLE,
+  COLOURING_EXAMPLE,
+  TEXT_ICONS_EXAMPLE,
+  VARIABLES_EXAMPLE,
+} from './examples';
 
 describe('Converting from HTML (e2e)', () => {
   it('should return empty string', () => {
@@ -8,42 +15,29 @@ describe('Converting from HTML (e2e)', () => {
 
   describe('Functions', () => {
     it('should be matched with expected', () => {
-      const example = fromHtml(
-        'Work with <span data-namespace="From.GetAdjective" /> Allies',
-      );
-      const result = `Work with [From.GetAdjective] Allies`;
-      expect(example.raw).toBe(result);
+      const example = fromHtml(HTML_EXAMPLE[FUNCTIONS_EXAMPLE]);
+      expect(example.raw).toBe(FUNCTIONS_EXAMPLE);
     });
   });
 
   describe('Colouring', () => {
     it('should be matched with expected', () => {
-      const example = fromHtml(
-        'This is my text, <font color="blue" data-color="B">this text is blue</font>, and <font color="red" data-color="R">this text is red</font>',
-      );
-
-      const result = `This is my text, §Bthis text is blue§!, and §Rthis text is red§!`;
-      expect(example.raw).toBe(result);
+      const example = fromHtml(HTML_EXAMPLE[COLOURING_EXAMPLE]);
+      expect(example.raw).toBe(COLOURING_EXAMPLE);
     });
   });
 
   describe('Text Icons', () => {
     it('should be matched with expected', () => {
-      const example = fromHtml(
-        'Unlocks <img data-name="decision_icon_small" alt="GFX_DECISION_ICON_SMALL" /> decisions',
-      );
-      const result = `Unlocks £decision_icon_small decisions`;
-      expect(example.raw).toBe(result);
+      const example = fromHtml(HTML_EXAMPLE[TEXT_ICONS_EXAMPLE]);
+      expect(example.raw).toBe(TEXT_ICONS_EXAMPLE);
     });
   });
 
   describe('Variables', () => {
     it('should be matched with expected', () => {
-      const example = fromHtml(
-        '<span data-variable="OWNER|UH" /> has <span data-variable="CURRENT|H0" />/<span data-variable="TOTAL|H0" /> points until being able to become <span data-variable="NEXTLEVEL|H" />',
-      );
-      const result = `$OWNER|UH$ has $CURRENT|H0$/$TOTAL|H0$ points until being able to become $NEXTLEVEL|H$`;
-      expect(example.raw).toBe(result);
+      const example = fromHtml(HTML_EXAMPLE[VARIABLES_EXAMPLE]);
+      expect(example.raw).toBe(VARIABLES_EXAMPLE);
     });
   });
 });

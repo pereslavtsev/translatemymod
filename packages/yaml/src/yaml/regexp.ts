@@ -13,7 +13,7 @@ export function languageRegexp(language?: LanguageKey): RegExp {
     return LANGUAGE_REGEXP;
   }
   return new RegExp(
-    `^l_${language}:\r?\n((\\s?\\r?\\n|^#.*|\\s*?(\\S+):(\\d+)?\\s+"(.+)?"\\s*?\\r?\\n?)+)`,
+    `^l_${language}:\r?\n((\\s?\\r?\\n|^\\s*?#.*|\\s*?(\\S+):(\\d+)?\\s+"(.+)?"\\s*?\\r?\\n?)+)`,
     FLAGS,
   );
 }

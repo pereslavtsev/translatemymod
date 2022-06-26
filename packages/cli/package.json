@@ -30,7 +30,7 @@
     "fast-glob": "^3.2.11",
     "googleapis": "^104.0.0",
     "hoi4-yaml": "^0.1.0",
-    "listr2": "^4.0.5",
+    "listr2": "4.0.5",
     "nest-commander": "^2.5.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

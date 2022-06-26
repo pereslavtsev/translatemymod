@@ -4,17 +4,17 @@ import { HeadingLevel, HtmlColor } from './consts';
 
 export function namespaceReplacer(_: string, ...args: string[]) {
   const [name] = args;
-  return `<span data-namespace="${name}" />`;
+  return `<span translate="no" data-namespace="${name}" />`;
 }
 
 export function textIconReplacer(_: string, ...args: string[]) {
   const [name] = args;
-  return `<img data-name="${name}" alt="GFX_${name.toUpperCase()}" />`;
+  return `<img translate="no" data-name="${name}" alt="GFX_${name.toUpperCase()}" />`;
 }
 
 export function colouringReplacer(_: string, ...args: [Color, ...string[]]) {
   const [color, children] = args;
-  const content = `<font color="${HtmlColor[color]}" data-color="${color}">${children}</font>`;
+  const content = `<font translate="no" color="${HtmlColor[color]}" data-color="${color}">${children}</font>`;
   const $ = load(content, { xmlMode: true, decodeEntities: false });
   switch (color) {
     case Color.Title:
@@ -31,5 +31,5 @@ export function colouringReplacer(_: string, ...args: [Color, ...string[]]) {
 
 export function variableReplacer(_: string, ...args: string[]) {
   const [data] = args;
-  return `<span data-variable="${data}" />`;
+  return `<span translate="no" data-variable="${data}" />`;
 }

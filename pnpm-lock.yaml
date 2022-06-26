@@ -27,7 +27,7 @@ importers:
       googleapis: ^104.0.0
       hoi4-yaml: ^0.1.0
       jest: 28.0.3
-      listr2: ^4.0.5
+      listr2: 4.0.5
       nest-commander: ^2.5.0
       prettier: ^2.3.2
       reflect-metadata: ^0.1.13

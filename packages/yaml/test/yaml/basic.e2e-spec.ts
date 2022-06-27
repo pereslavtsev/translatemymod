@@ -153,16 +153,29 @@ describe('Basic (e2e)', () => {
   });
 
   describe('Language Renaming', () => {
-    let edited: Yaml;
+    let renamed: Yaml;
 
     beforeAll(async () => {
       const file = await readExampleFile('basic-renamed.yml');
-      edited = Yaml.from(file);
+      renamed = Yaml.from(file);
     });
 
-    it('data after editing should be matched with expected', () => {
+    it('data after renaming should be matched with expected', () => {
       yaml.renameLanguage('english', 'french');
-      expect(yaml.toString()).toBe(edited.toString());
+      expect(yaml.toString()).toBe(renamed.toString());
+    });
+  });
+
+  describe('Merging', () => {
+    let merged: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('basic-merged.yml');
+      merged = Yaml.from(file);
+    });
+
+    it('data after merging should be matched with expected', () => {
+      expect(yaml.merge(yaml).toString()).toBe(merged.toString());
     });
   });
 });

@@ -67,6 +67,10 @@ export class Yaml extends TranslationMap {
     );
   }
 
+  merge(yaml: Yaml): Yaml {
+    return Yaml.from(this.toString() + yaml.toString());
+  }
+
   protected matchTranslations(language?: LanguageKey): Translation[] {
     if (!language) {
       return this.matchLanguages().flatMap(this.matchTranslations.bind(this));

@@ -1,0 +1,18 @@
+l_english:
+  infantry_equipment: "Infantry Equipment"
+  infantry_equipment_short: "Inf. Eq."
+  infantry_equipment_desc: "This is infantry equipment"
+
+l_english:
+  some_key_1: "Infantry Equipment"
+  some_key_2: "Inf. Eq."
+  some_key_3: "This is infantry equipment"
+
+l_russian:
+  infantry_equipment: "Infantry Equipment"
+  infantry_equipment_short: "Inf. Eq."
+  infantry_equipment_desc: "This is infantry equipment"
+
+l_english:
+  some_key_4: "Infantry Equipment (edited)"
+  some_key_5: "Inf. Eq."

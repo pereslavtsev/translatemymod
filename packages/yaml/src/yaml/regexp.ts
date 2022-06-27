@@ -8,9 +8,15 @@ const TRANSLATION_REGEXP = new RegExp(
   FLAGS,
 );
 
-export function languageRegexp(language?: LanguageKey): RegExp {
+export function languageRegexp(
+  language?: LanguageKey,
+  withData = true,
+): RegExp {
   if (!language) {
     return LANGUAGE_REGEXP;
+  }
+  if (!withData) {
+    return new RegExp(`^\\s*?l_(?<lang>${language}):\\r?\\n`, FLAGS);
   }
   return new RegExp(
     `^l_${language}:\r?\n((\\s?\\r?\\n|^\\s*?#.*|\\s*?(\\S+):(\\d+)?\\s+"(.+)?"\\s*?\\r?\\n?)+)`,

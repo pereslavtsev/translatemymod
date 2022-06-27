@@ -87,4 +87,18 @@ describe('Multilingual (e2e)', () => {
       expect(yaml.toString()).toBe(edited.toString());
     });
   });
+
+  describe('Language Renaming', () => {
+    let edited: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('multilingual-renamed.yml');
+      edited = Yaml.from(file);
+    });
+
+    it('data after editing should be matched with expected', () => {
+      yaml.renameLanguage('french', 'english');
+      expect(yaml.toString()).toBe(edited.toString());
+    });
+  });
 });

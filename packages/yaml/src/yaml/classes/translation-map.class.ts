@@ -13,7 +13,9 @@ type TranslationChangeEvent = Omit<Translation, 'value'> & {
   readonly context: TranslationMap;
 };
 
-type GetTranslationsOptions = Partial<Pick<Translation, 'language'>>;
+type GetTranslationsOptions = Partial<Pick<Translation, 'language'>> & {
+  value?: string | RegExp;
+};
 
 export class TranslationMap extends CaseInsensitiveMap<
   TranslationKey,
@@ -76,18 +78,47 @@ export class TranslationMap extends CaseInsensitiveMap<
     return new TranslationMap(entries);
   }
 
+  renameLanguage(from: LanguageKey, to: LanguageKey): void {
+    this.translations({ language: from }).forEach((translation) => {
+      const { key } = translation;
+      const langMap = this.get(key);
+      const langData = langMap.get(from);
+      langMap.set(to, langData).delete(from);
+    });
+  }
+
   translations(options: GetTranslationsOptions = {}): Translation[] {
-    const { language } = options;
+    const { language, value } = options;
     return [...this.entries()]
       .map(([key, langMap]) =>
         [...(language ? langMap.language(language) : langMap).entries()].map(
           ([language, versionMap]) =>
-            [...(versionMap?.entries() ?? [])].map(([version, value]) => ({
-              key,
-              language,
-              value,
-              version,
-            })),
+            [...(versionMap?.entries() ?? [])]
+              .map(([version, value]) => ({
+                key,
+                language,
+                value,
+                version,
+              }))
+              .filter((translation) => {
+                if (!value) {
+                  return true;
+                }
+                switch (typeof value) {
+                  case 'string': {
+                    return translation.value.raw === value;
+                  }
+                  case 'object': {
+                    if (value instanceof RegExp) {
+                      // global flag should be removed
+                      const flags = value.flags.replace('g', '');
+                      return new RegExp(value, flags).test(
+                        translation.value.raw,
+                      );
+                    }
+                  }
+                }
+              }),
         ),
       )
       .flat(3);

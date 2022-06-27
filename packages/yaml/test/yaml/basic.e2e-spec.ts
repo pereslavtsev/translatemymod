@@ -84,6 +84,54 @@ describe('Basic (e2e)', () => {
       });
       expect(translation.raw).toStrictEqual(EXAMPLE_VALUE);
     });
+
+    describe('Translation Search', () => {
+      describe('Search by plain text', () => {
+        let translations: Translation[];
+
+        beforeAll(() => {
+          translations = yaml.translations({
+            language: EXAMPLE_LANGUAGE,
+            value: EXAMPLE_VALUE,
+          });
+        });
+
+        it('should have a result', () => {
+          expect(translations.length).toBe(1);
+        });
+
+        it('should be array of translations', () => {
+          expect(
+            translations.every(
+              (translation) => typeof translation === 'object',
+            ),
+          ).toBe(true);
+        });
+      });
+
+      describe('Search by regular expression', () => {
+        let translations: Translation[];
+
+        beforeAll(() => {
+          translations = yaml.translations({
+            language: EXAMPLE_LANGUAGE,
+            value: /inf/gim,
+          });
+        });
+
+        it('should have a results', () => {
+          expect(translations.length).toBe(2);
+        });
+
+        it('should be array of translations', () => {
+          expect(
+            translations.every(
+              (translation) => typeof translation === 'object',
+            ),
+          ).toBe(true);
+        });
+      });
+    });
   });
 
   describe('Editing', () => {
@@ -100,6 +148,20 @@ describe('Basic (e2e)', () => {
         language: EXAMPLE_LANGUAGE,
         value: 'Infantry Equipment (edited)',
       });
+      expect(yaml.toString()).toBe(edited.toString());
+    });
+  });
+
+  describe('Language Renaming', () => {
+    let edited: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('basic-renamed.yml');
+      edited = Yaml.from(file);
+    });
+
+    it('data after editing should be matched with expected', () => {
+      yaml.renameLanguage('english', 'french');
       expect(yaml.toString()).toBe(edited.toString());
     });
   });

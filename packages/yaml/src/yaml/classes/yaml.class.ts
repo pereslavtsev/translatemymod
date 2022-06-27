@@ -44,6 +44,23 @@ export class Yaml extends TranslationMap {
     this.debug('data has been updated');
   }
 
+  renameLanguage(from: LanguageKey, to: LanguageKey): void {
+    super.renameLanguage(from, to);
+    const updatedData = this.data.replace(
+      languageRegexp(from, false),
+      (data, ...args: [LanguageKey, ...string[]]) => {
+        const [language] = args;
+        return data.replace(language, to);
+      },
+    );
+    if (this.data === updatedData) {
+      this.debug('warning: no data updates after renaming event!');
+      return;
+    }
+    this.data = updatedData;
+    this.debug('data has been updated');
+  }
+
   static from(data: Buffer | string) {
     return new Yaml(
       Buffer.isBuffer(data) ? removeBOM(data.toString()) : removeBOM(data),

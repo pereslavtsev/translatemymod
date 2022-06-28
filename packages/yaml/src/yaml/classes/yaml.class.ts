@@ -5,14 +5,31 @@ import { translationRegexp, languageRegexp } from '../regexp';
 import { addBOM, removeBOM } from '../helpers';
 import { nanoid } from 'nanoid';
 
+type MergeOptions = {
+  parse?: boolean;
+};
+
+type YamlOptions = {
+  parse?: boolean;
+};
+
 export class Yaml extends TranslationMap {
   protected readonly id = nanoid();
   protected readonly debug = this.debug.extend(this.id);
 
-  protected constructor(protected data: string) {
+  protected constructor(protected data: string, options: YamlOptions = {}) {
     super();
+    const { parse = true } = options;
     this.debug('yaml file has been initialized');
-    this.add(...this.matchTranslations());
+    if (parse) {
+      this.parse();
+    }
+  }
+
+  parse() {
+    const translations = this.matchTranslations();
+    this.debug(`${translations.length} has been matched`);
+    translations.forEach((translation) => this.add(translation));
     this.debug(
       '%d keys has been matched at %d languages:',
       this.size,
@@ -61,14 +78,24 @@ export class Yaml extends TranslationMap {
     this.debug('data has been updated');
   }
 
-  static from(data: Buffer | string) {
+  static from(data: Buffer | string, options?: YamlOptions) {
     return new Yaml(
       Buffer.isBuffer(data) ? removeBOM(data.toString()) : removeBOM(data),
+      options,
     );
   }
 
-  merge(yaml: Yaml): Yaml {
-    return Yaml.from(this.toString() + yaml.toString());
+  get raw() {
+    return this.data;
+  }
+
+  merge(yaml: Yaml, options: MergeOptions = {}): Yaml {
+    const { parse = true } = options;
+    this.data = this.data.concat(yaml.raw);
+    if (parse) {
+      this.parse();
+    }
+    return this;
   }
 
   protected matchTranslations(language?: LanguageKey): Translation[] {

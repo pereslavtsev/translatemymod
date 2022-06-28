@@ -175,7 +175,8 @@ describe('Basic (e2e)', () => {
     });
 
     it('data after merging should be matched with expected', () => {
-      expect(yaml.merge(yaml).toString()).toBe(merged.toString());
+      yaml.merge(yaml);
+      expect(yaml.toString()).toBe(merged.toString());
     });
   });
 });

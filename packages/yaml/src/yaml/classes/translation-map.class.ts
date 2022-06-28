@@ -42,8 +42,7 @@ export class TranslationMap extends CaseInsensitiveMap<
       case 'string': {
         return super.set(translation, value);
       }
-      case 'object':
-      default: {
+      case 'object': {
         const { key, language, version = 0, value } = translation;
         const before = this.t({ key, version, language });
         const after = this.get(key)
@@ -58,6 +57,10 @@ export class TranslationMap extends CaseInsensitiveMap<
           version,
           language,
         });
+        return this;
+      }
+      default: {
+        throw new Error('Incorrect translation type');
       }
     }
   }

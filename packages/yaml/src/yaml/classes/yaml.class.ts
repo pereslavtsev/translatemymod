@@ -36,6 +36,8 @@ export class Yaml extends TranslationMap {
       this.languages.length,
       ...this.languages,
     );
+    this.debug('Building a cache...');
+    this.buildValuesCache();
   }
 
   protected handleChange(event) {
@@ -105,12 +107,14 @@ export class Yaml extends TranslationMap {
 
     return [...this.data.matchAll(languageRegexp(language))].flatMap(
       ([, data]) =>
-        [...data.matchAll(translationRegexp())].map(({ groups }) => ({
-          language,
-          key: groups['key'],
-          version: groups['version'] ? Number(groups['version']) : undefined,
-          value: text(groups['value'] ?? ''),
-        })),
+        [...data.matchAll(translationRegexp())]
+          .filter(({ groups }) => !!groups['key'])
+          .map(({ groups }) => ({
+            language,
+            key: groups['key'],
+            version: groups['version'] ? Number(groups['version']) : undefined,
+            value: text(groups['value'] ?? ''),
+          })),
     );
   }
 

@@ -15,18 +15,36 @@ type TranslationChangeEvent = Omit<Translation, 'value'> & {
 
 type GetTranslationsOptions = Partial<Pick<Translation, 'language'>> & {
   value?: string | RegExp;
+  cacheOnly?: boolean;
 };
 
 export class TranslationMap extends CaseInsensitiveMap<
   TranslationKey,
   LanguageMap
 > {
-  translate(options: TranslateOptions) {
+  translate(options: TranslateOptions): FormattedText | null {
     const { language, version, key } = options;
-    return this.get(key).get(language).v(version);
+    return this.get(key)?.get(language)?.v(version) ?? null;
   }
 
   readonly t = this.translate;
+  protected valuesCache: Map<string, Translation[]> = null;
+
+  protected buildValuesCache() {
+    const translations = this.translations();
+
+    const valuesCache = new Map<string, Translation[]>();
+
+    translations.forEach((translation) => {
+      const { value } = translation;
+      const raw = typeof value === 'string' ? value : value.raw;
+      if (!valuesCache.has(raw)) {
+        valuesCache.set(raw, []);
+      }
+      valuesCache.get(raw).push(translation);
+    });
+    this.valuesCache = valuesCache;
+  }
 
   protected handleAdd(translation: Translation) {
     this.debug('translation has been added: %o', translation);
@@ -91,7 +109,21 @@ export class TranslationMap extends CaseInsensitiveMap<
   }
 
   translations(options: GetTranslationsOptions = {}): Translation[] {
-    const { language, value } = options;
+    const { language, value, cacheOnly = false } = options;
+
+    if (value && typeof value === 'string' && this.valuesCache.has(value)) {
+      return this.valuesCache.get(value).filter((translation) => {
+        if (!language) {
+          return true;
+        }
+        return language === translation.language;
+      });
+    }
+
+    if (cacheOnly) {
+      return [];
+    }
+
     return [...this.entries()]
       .map(([key, langMap]) =>
         [...(language ? langMap.language(language) : langMap).entries()].map(

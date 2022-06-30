@@ -4,6 +4,7 @@ import type { LanguageKey, Translation } from '../types';
 import { translationRegexp, languageRegexp } from '../regexp';
 import { addBOM, removeBOM } from '../helpers';
 import { nanoid } from 'nanoid';
+import { ValidationError } from '../errors';
 
 type MergeOptions = {
   parse?: boolean;
@@ -89,6 +90,51 @@ export class Yaml extends TranslationMap {
 
   get raw() {
     return this.data;
+  }
+
+  validate(): boolean {
+    const lines = this.data.split('\n');
+    return lines.every((line, index) => {
+      const number = index + 1;
+      if (line.trim() === '') {
+        this.debug(`line ${number} is a empty`);
+        return true;
+      }
+      const isLanguageDeclaration = new RegExp(
+        languageRegexp().source.replace('\\n', '').concat('\\s*?$'),
+      ).test(line);
+      if (isLanguageDeclaration) {
+        this.debug(`line ${number} is a language declaration`);
+        return true;
+      }
+      const isTranslation = new RegExp(
+        translationRegexp()
+          .source.replace('\\s*?#+(?<comment>.*)|', '')
+          .concat('\\s*?$'),
+      ).test(line);
+      if (isTranslation) {
+        this.debug(`line ${number} is a translation`);
+        return true;
+      }
+      const isComment = /\s*?#+(?<comment>.*)$/.test(line);
+      if (isComment) {
+        this.debug(`line ${number} is a comment`);
+        return true;
+      }
+      const error = new ValidationError();
+      error.name = `Validation Error`;
+      error.message = `Invalid YAML syntax at line ${number}:\n${lines
+        .slice(number - 2 >= 0 ? number - 2 : 0, 3)
+        .map(
+          (line, i) =>
+            `\t${i + 1} | ${line}${i === number - 1 ? ' <---- !' : ''}`,
+        )
+        .join('\n')}
+      `;
+      error.stack = `${error.name}: ${error.message}`;
+
+      throw error;
+    });
   }
 
   merge(yaml: Yaml, options: MergeOptions = {}): Yaml {

@@ -88,6 +88,12 @@ describe('Multilingual (e2e)', () => {
     });
   });
 
+  describe('Validating', () => {
+    it('should be valid', () => {
+      expect(yaml.validate()).toBe(true);
+    });
+  });
+
   describe('Language Renaming', () => {
     let renamed: Yaml;
 

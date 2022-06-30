@@ -1,4 +1,4 @@
-import { text, Yaml } from '../../src';
+import { text, ValidationError, Yaml } from '../../src';
 import { readExampleFile } from './helpers';
 import { VersionMap } from '../../src/yaml/classes/version-map.class';
 import { Translation } from '../../src/yaml/types';
@@ -164,6 +164,24 @@ describe('Basic (e2e)', () => {
       yaml.renameLanguage('english', 'french');
       expect(yaml.toString()).toBe(renamed.toString());
     });
+  });
+
+  describe('Validating', () => {
+    let invalid: Yaml;
+
+    beforeAll(async () => {
+      const file = await readExampleFile('basic-invalid.yml');
+      invalid = Yaml.from(file);
+    });
+
+    it('should be valid', () => {
+      expect(yaml.validate()).toBe(true);
+    });
+
+    // TODO:
+    // it('should throw a validation error', () => {
+    //   expect(invalid.validate()).toBe(true);
+    // });
   });
 
   describe('Merging', () => {

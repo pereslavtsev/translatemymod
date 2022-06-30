@@ -85,6 +85,12 @@ describe('Linebreaks and empty strings (e2e)', () => {
     });
   });
 
+  describe('Validating', () => {
+    it('should be valid', () => {
+      expect(yaml.validate()).toBe(true);
+    });
+  });
+
   describe('Editing', () => {
     let edited: Yaml;
 

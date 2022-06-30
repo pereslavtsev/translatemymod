@@ -1,5 +1,5 @@
 {
-  "name": "cli",
+  "name": "@translatemymod/cli",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -23,12 +23,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@google-cloud/translate": "^6.3.1",
     "@nestjs/common": "^8.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
     "fast-glob": "^3.2.11",
-    "googleapis": "^104.0.0",
     "hoi4-yaml": "^0.1.0",
     "listr2": "4.0.5",
     "nest-commander": "^2.5.0",

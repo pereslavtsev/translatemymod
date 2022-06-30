@@ -1,16 +1,9 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import * as fg from 'fast-glob';
-import { Yaml, fromHtml } from 'hoi4-yaml';
+import { Yaml } from 'hoi4-yaml';
 import * as fs from 'fs';
-import { TranslationServiceClient } from '@google-cloud/translate';
 import { Listr } from 'listr2';
 import * as path from 'path';
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const translationClient = new TranslationServiceClient();
 
 interface TranslateCommandOptions {
   modPath?: string;
@@ -28,16 +21,14 @@ type Ctx = {
 type Ctx1 = {
   processed: number;
   total: number;
+  prevOriginalYaml: Yaml;
+  prevTranslatedYaml: Yaml;
 };
 
 const KR_PATH =
   '/Volumes/Windows/Users/pstra/Documents/Paradox Interactive/Hearts of Iron IV/mod/1521695605_kaiserreich';
-
-function* chunks(arr, n) {
-  for (let i = 0; i < arr.length; i += n) {
-    yield arr.slice(i, i + n);
-  }
-}
+const KR_PATH_RUS =
+  '/Volumes/Windows/Users/pstra/Documents/Paradox Interactive/Hearts of Iron IV/mod/1151467921_kaiserreich_beta';
 
 @Command({
   name: 'translate',
@@ -45,6 +36,14 @@ function* chunks(arr, n) {
   description: 'A parameter parse',
 })
 export class TranslateCommand implements CommandRunner {
+  @Option({
+    flags: '--mod <mod>',
+    description: 'A mod path',
+  })
+  parseModPath(val: string) {
+    return val;
+  }
+
   async run(
     [modPath]: string[],
     options?: TranslateCommandOptions,
@@ -61,13 +60,53 @@ export class TranslateCommand implements CommandRunner {
       cwd: modPath2,
     });
 
+    const entriesPrev = await fg(['**/*.yml'], {
+      cwd: KR_PATH,
+      absolute: true,
+    });
+
+    const entriesPrevTranslated = await fg(['**/*.yml'], {
+      cwd: KR_PATH_RUS,
+      absolute: true,
+    });
+
     const tasks = new Listr<Ctx1>([], {
       ctx: {
         processed: 0,
         total: entries.length,
+        prevOriginalYaml: null,
+        prevTranslatedYaml: null,
       },
       rendererOptions: {
-        showSubtasks: false,
+        //showSubtasks: false,
+      },
+    });
+
+    tasks.add({
+      title: 'Reading files...',
+      task: (ctx, task) =>
+        task.newListr((parent) =>
+          entriesPrev.concat(...entriesPrevTranslated).map((entry, i) => ({
+            task: async (ctx1, task1) => {
+              parent.output = `Reading a file ${entry}... (${i} / ${entriesPrev.length})`;
+              const buffer = await fs.promises.readFile(entry.toString());
+              const yaml = Yaml.from(buffer, { parse: false });
+              if (!ctx1.prevOriginalYaml) {
+                ctx1.prevOriginalYaml = yaml;
+              }
+              ctx1.prevOriginalYaml.merge(yaml, { parse: false });
+            },
+          })),
+        ),
+    });
+    tasks.add({
+      title: 'Parsing YAML from previous version...',
+      task: (ctx, task) => {
+        ctx.prevOriginalYaml.parse();
+        const { size: translations, languages } = ctx.prevOriginalYaml;
+        const translationsCount = new Intl.NumberFormat().format(translations);
+        const languagesCount = new Intl.NumberFormat().format(languages.length);
+        task.title = `YAML has been successfully parsed (${translationsCount} translations at ${languagesCount} languages)`;
       },
     });
 
@@ -76,7 +115,6 @@ export class TranslateCommand implements CommandRunner {
       task: async (ctx1, task) =>
         task.newListr((parent) =>
           entries.map((entry) => ({
-            title: `${entry}`,
             task: (_, task) =>
               task.newListr<Ctx>(
                 () => [
@@ -95,6 +133,7 @@ export class TranslateCommand implements CommandRunner {
                     },
                   },
                   {
+                    // skip: () => true,
                     task: (ctx, task) =>
                       task.newListr(
                         ctx.yaml
@@ -110,33 +149,44 @@ export class TranslateCommand implements CommandRunner {
                                 task.skip('Skipped an empty string');
                                 return;
                               }
-                              const [{ translations }] =
-                                await translationClient.translateText({
-                                  parent: `projects/kr-atlas/locations/global`,
-                                  contents: [markup],
-                                  mimeType: 'text/html',
-                                  sourceLanguageCode: 'en',
-                                  targetLanguageCode: 'ru',
-                                });
-                              ctx.yaml.set({
+
+                              parent.output = `Importing translation ${key} from previous version...`;
+                              const [tr] = ctx1.prevOriginalYaml.translations({
+                                cacheOnly: true,
                                 language: 'english',
-                                version,
-                                key,
-                                value: fromHtml(translations[0].translatedText),
+                                value:
+                                  typeof value === 'string' ? value : value.raw,
                               });
-                              const translated = ctx.translated++;
-                              const checked = translated + ctx.skipped;
-                              const percentage = Math.round(
-                                (checked / ctx.yaml.size) * 100,
-                              );
-                              parent.output = `Translating ${entry}: ${percentage}% (${checked}/${ctx.yaml.size})`;
+                              if (tr) {
+                                const translatedValue = ctx1.prevOriginalYaml.t(
+                                  {
+                                    key: tr.key,
+                                    version: tr.version,
+                                    language: 'russian',
+                                  },
+                                );
+                                if (translatedValue) {
+                                  ctx.yaml.set({
+                                    language: 'english',
+                                    key,
+                                    value: translatedValue,
+                                  });
+                                  ctx.skipped++;
+                                  task.skip('Skipped a translation');
+                                  return;
+                                }
+                              }
                             },
                           })),
+                        {
+                          concurrent: 1,
+                        },
                       ),
                   },
                   {
                     task: async (ctx, task) => {
                       parent.output = `Writing a file ${entry}...`;
+                      ctx.yaml.renameLanguage('english', 'russian');
                       const filePath = path.join(
                         '../../generated',
                         entry.toString(),
@@ -172,13 +222,5 @@ export class TranslateCommand implements CommandRunner {
     } catch (e) {
       console.error(e);
     }
-  }
-
-  @Option({
-    flags: '--mod <mod>',
-    description: 'A mod path',
-  })
-  parseModPath(val: string) {
-    return val;
   }
 }

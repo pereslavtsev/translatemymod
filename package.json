@@ -1,5 +1,7 @@
 {
   "name": "translatemymod",
+  "private": true,
+  "workspaces": ["packages/*"],
   "version": "1.0.0",
   "description": "",
   "scripts": {
